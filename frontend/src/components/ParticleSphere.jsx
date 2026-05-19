@@ -271,10 +271,14 @@ export default function ParticleSphere({ sphereState, onSphereClick, isLogoMode 
 
   return (
     <>
-      {/* Canvas always full-screen — never resizes so no viewport distortion */}
+      {/* Canvas always full-screen — fades out via CSS when logo mode */}
       <div
         className="fixed inset-0 z-0"
-        style={{ pointerEvents: isLogoMode ? 'none' : 'auto' }}
+        style={{
+          pointerEvents: isLogoMode ? 'none' : 'auto',
+          opacity:    isLogoMode ? 0 : 1,
+          transition: 'opacity 0.35s ease',
+        }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
