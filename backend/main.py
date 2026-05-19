@@ -32,6 +32,13 @@ app.add_middleware(
 )
 
 
+# ── Health check ─────────────────────────────────────────────────────────────
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
 # ── Models ───────────────────────────────────────────────────────────────────
 
 class InfoRequest(BaseModel):
