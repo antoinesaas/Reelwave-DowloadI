@@ -27,8 +27,8 @@ def friendly_error(e: Exception) -> str:
         return "URL non supportée. Essaie YouTube, TikTok, Instagram, Pinterest ou Twitter/X."
     if "Private video" in msg or "private" in msg.lower():
         return "Cette vidéo est privée."
-    if "age" in msg.lower() or "sign in" in msg.lower():
-        return "Cette vidéo nécessite une connexion ou est réservée aux adultes."
+    if "age" in msg.lower() or "sign in" in msg.lower() or "login" in msg.lower():
+        return "Cette vidéo est restreinte par YouTube. Essaie avec une autre vidéo ou une URL TikTok/Instagram."
     if "not available" in msg.lower() or "unavailable" in msg.lower():
         return "Cette vidéo n'est pas disponible."
     if "HTTP Error 403" in msg:
@@ -71,8 +71,15 @@ class handler(BaseHTTPRequestHandler):
                 "no_warnings": True,
                 "skip_download": True,
                 "socket_timeout": 10,
+                # Use Android client — bypasses most YouTube age/login restrictions
+                "extractor_args": {
+                    "youtube": {
+                        "player_client": ["android", "web"],
+                        "skip": ["hls"],
+                    }
+                },
                 "http_headers": {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                    "User-Agent": "com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip"
                 },
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:

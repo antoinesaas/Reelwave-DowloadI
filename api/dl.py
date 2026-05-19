@@ -52,7 +52,16 @@ class handler(BaseHTTPRequestHandler):
                 "no_warnings": True,
                 "skip_download": True,
                 "format": fmt,
-                "socket_timeout": 8,
+                "socket_timeout": 10,
+                "extractor_args": {
+                    "youtube": {
+                        "player_client": ["android", "web"],
+                        "skip": ["hls"],
+                    }
+                },
+                "http_headers": {
+                    "User-Agent": "com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip"
+                },
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
