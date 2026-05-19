@@ -31,13 +31,13 @@ export default function App() {
     if (phase !== 'hero') return
 
     setSphereState('imploding')
-    setTimeout(() => setSphereState('exploding'), 180)
-    setTimeout(() => setSphereState('ring'),      420)
+    setTimeout(() => setSphereState('exploding'), 160)
+    setTimeout(() => setSphereState('ring'),      340)
     setTimeout(() => {
       setSphereState('logo')
       setIsLogoMode(true)
       setPhase('input')
-    }, 650)
+    }, 480)
   }, [phase])
 
   // ── URL submitted from PastePanel ────────────────────────────────────────────
@@ -153,11 +153,12 @@ export default function App() {
         {phase === 'input' && (
           <motion.div
             key="input-overlay"
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="fixed inset-0 flex items-end md:items-center justify-center px-4 pointer-events-none z-20"
-            style={{ paddingBottom: 32 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 flex items-center justify-center px-4 pointer-events-none z-20"
+            style={{ paddingTop: 40 }}
           >
             <div className="pointer-events-auto w-full max-w-lg">
               <PastePanel
