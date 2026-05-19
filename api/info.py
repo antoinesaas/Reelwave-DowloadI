@@ -1,7 +1,6 @@
-"""Vercel serverless function — extract video metadata via yt-dlp."""
+"""Vercel serverless — extract video metadata via yt-dlp."""
 from http.server import BaseHTTPRequestHandler
 import json
-import yt_dlp
 
 CORS = {
     "Access-Control-Allow-Origin": "*",
@@ -10,8 +9,8 @@ CORS = {
 }
 
 PLATFORM_MAP = {
-    "youtube": "YouTube", "youtu": "YouTube",
-    "tiktok": "TikTok", "instagram": "Instagram",
+    "youtube": "YouTube", "youtu.be": "YouTube",
+    "tiktok":  "TikTok",  "instagram": "Instagram",
     "pinterest": "Pinterest", "twitter": "Twitter/X", "x.com": "Twitter/X",
 }
 
@@ -21,6 +20,24 @@ def detect_platform(url: str) -> str:
         if k in u:
             return v
     return "Web"
+
+def friendly_error(e: Exception) -> str:
+    msg = str(e)
+    if "Unsupported URL" in msg or "unsupported url" in msg.lower():
+        return "URL non supportée. Essaie YouTube, TikTok, Instagram, Pinterest ou Twitter/X."
+    if "Private video" in msg or "private" in msg.lower():
+        return "Cette vidéo est privée."
+    if "age" in msg.lower() or "sign in" in msg.lower():
+        return "Cette vidéo nécessite une connexion ou est réservée aux adultes."
+    if "not available" in msg.lower() or "unavailable" in msg.lower():
+        return "Cette vidéo n'est pas disponible."
+    if "HTTP Error 403" in msg:
+        return "Accès refusé par la plateforme (403)."
+    if "HTTP Error 404" in msg:
+        return "Vidéo introuvable (404)."
+    if "timeout" in msg.lower() or "timed out" in msg.lower():
+        return "Délai dépassé. Réessaie dans quelques secondes."
+    return f"Erreur : {msg[:120]}"
 
 class handler(BaseHTTPRequestHandler):
 
@@ -33,9 +50,15 @@ class handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_OPTIONS(self):
-        self._send(200, b"")
+        self._send(200, b"{}")
 
     def do_POST(self):
+        try:
+            import yt_dlp
+        except ImportError:
+            self._send(500, json.dumps({"detail": "yt-dlp non installé sur le serveur."}).encode())
+            return
+
         try:
             length = int(self.headers.get("Content-Length", 0))
             body   = json.loads(self.rfile.read(length))
@@ -47,8 +70,10 @@ class handler(BaseHTTPRequestHandler):
                 "quiet": True,
                 "no_warnings": True,
                 "skip_download": True,
-                "socket_timeout": 8,
-                "extract_flat": False,
+                "socket_timeout": 10,
+                "http_headers": {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                },
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
@@ -63,7 +88,7 @@ class handler(BaseHTTPRequestHandler):
             self._send(200, json.dumps(result).encode())
 
         except Exception as e:
-            self._send(400, json.dumps({"detail": str(e)}).encode())
+            self._send(400, json.dumps({"detail": friendly_error(e)}).encode())
 
     def log_message(self, *_):
         pass

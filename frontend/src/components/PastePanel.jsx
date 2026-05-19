@@ -97,10 +97,10 @@ export default function PastePanel({ onValidUrl, onClose }) {
   return (
     <motion.div
       key="paste-panel"
-      initial={{ opacity: 0, scale: 0.92 }}
-      animate={{ opacity: 1, scale: 1   }}
-      exit={{    opacity: 0, scale: 0.94 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30, duration: 0.4 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0  }}
+      exit={{    opacity: 0, y: 10 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
       className="glass-card rounded-[20px] p-6 w-full max-w-lg mx-auto"
     >
       {/* Platform badge */}

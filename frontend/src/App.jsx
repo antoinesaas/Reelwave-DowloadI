@@ -30,21 +30,14 @@ export default function App() {
   const handleSphereClick = useCallback(() => {
     if (phase !== 'hero') return
 
-    // 1. Implode toward center (swallow the click)
     setSphereState('imploding')
-
-    // 2. Burst outward
-    setTimeout(() => setSphereState('exploding'), 320)
-
-    // 3. Converge to ring
-    setTimeout(() => setSphereState('ring'), 680)
-
-    // 4. Particles fade away, logo CSS circle pops in, input appears
+    setTimeout(() => setSphereState('exploding'), 180)
+    setTimeout(() => setSphereState('ring'),      420)
     setTimeout(() => {
       setSphereState('logo')
       setIsLogoMode(true)
       setPhase('input')
-    }, 1100)
+    }, 650)
   }, [phase])
 
   // ── URL submitted from PastePanel ────────────────────────────────────────────
@@ -58,12 +51,7 @@ export default function App() {
       const info = await fetchInfo(url)
       setVideoInfo(info)
     } catch (e) {
-      const isNetErr = !e.response
-      setBackendError(
-        isNetErr
-          ? 'Serveur non disponible. Le backend n\'est pas encore déployé.'
-          : (e.response?.data?.detail || 'Impossible de récupérer les infos.')
-      )
+      setBackendError(e.message || 'Impossible de récupérer les infos.')
     } finally {
       setInfoLoading(false)
     }
