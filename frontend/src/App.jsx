@@ -26,22 +26,25 @@ export default function App() {
   const { job, fetchInfo, startDownload, cancel, reset } = useDownload()
   const { history, add: addHistory, clear: clearHistory } = useHistory()
 
-  // ── Sphere click → explode → ring → transition to input ─────────────────────
+  // ── Sphere click → implode → explode → ring → logo ──────────────────────────
   const handleSphereClick = useCallback(() => {
     if (phase !== 'hero') return
-    setSphereState('exploding')
 
-    // After 400ms switch to ring shape
-    setTimeout(() => {
-      setSphereState('ring')
-    }, 400)
+    // 1. Implode toward center (swallow the click)
+    setSphereState('imploding')
 
-    // After ring settles (~800ms total), shrink to logo and show input
+    // 2. Burst outward
+    setTimeout(() => setSphereState('exploding'), 320)
+
+    // 3. Converge to ring
+    setTimeout(() => setSphereState('ring'), 680)
+
+    // 4. Particles fade away, logo CSS circle pops in, input appears
     setTimeout(() => {
-      setIsLogoMode(true)
       setSphereState('logo')
+      setIsLogoMode(true)
       setPhase('input')
-    }, 950)
+    }, 1100)
   }, [phase])
 
   // ── URL submitted from PastePanel ────────────────────────────────────────────

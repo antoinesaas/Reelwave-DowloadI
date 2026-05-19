@@ -24,7 +24,7 @@ function ringPositions(count, radius) {
   for (let i = 0; i < count; i++) {
     const t = (i / count) * Math.PI * 2
     pos[i * 3]     = Math.cos(t) * radius
-    pos[i * 3 + 1] = (Math.random() - 0.5) * 0.12
+    pos[i * 3 + 1] = (Math.random() - 0.5) * 0.08
     pos[i * 3 + 2] = Math.sin(t) * radius
   }
   return pos
@@ -33,9 +33,12 @@ function ringPositions(count, radius) {
 function explodeTargets(count) {
   const pos = new Float32Array(count * 3)
   for (let i = 0; i < count; i++) {
-    const theta = Math.random() * Math.PI * 2
-    const phi   = Math.acos(2 * Math.random() - 1)
-    const r     = 3.5 + Math.random() * 4
+    // Uniform sphere distribution so no directional bias
+    const u     = Math.random()
+    const v     = Math.random()
+    const theta = 2 * Math.PI * u
+    const phi   = Math.acos(2 * v - 1)
+    const r     = 2.8 + Math.random() * 2.5
     pos[i * 3]     = Math.sin(phi) * Math.cos(theta) * r
     pos[i * 3 + 1] = Math.cos(phi) * r
     pos[i * 3 + 2] = Math.sin(phi) * Math.sin(theta) * r
@@ -43,13 +46,20 @@ function explodeTargets(count) {
   return pos
 }
 
-// ── Custom round-particle shader ──────────────────────────────────────────────
+// Origin (implosion target)
+function originPositions(count) {
+  const pos = new Float32Array(count * 3) // all zeros
+  return pos
+}
+
+// ── Shaders ──────────────────────────────────────────────────────────────────
 
 const VERT = /* glsl */`
   attribute float aSize;
+  attribute float aAlpha;
   varying float vAlpha;
   void main() {
-    vAlpha = 1.0;
+    vAlpha = aAlpha;
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     gl_PointSize = aSize * (28.0 / -mv.z);
     gl_Position  = projectionMatrix * mv;
@@ -62,30 +72,31 @@ const FRAG = /* glsl */`
     vec2  c = gl_PointCoord - 0.5;
     float d = length(c);
     if (d > 0.5) discard;
-    float a = smoothstep(0.5, 0.22, d) * vAlpha;
+    float a = smoothstep(0.5, 0.18, d) * vAlpha;
     gl_FragColor = vec4(uColor, a);
   }
 `
 
-// ── Particles scene component ─────────────────────────────────────────────────
+// ── Particles scene ───────────────────────────────────────────────────────────
 
 function Particles({ sphereState, onReady, mouseNDC, particleCount, sphereRadius }) {
-  const ref       = useRef()
-  const { camera, size } = useThree()
+  const ref   = useRef()
+  const { camera } = useThree()
 
   const homePos    = useMemo(() => fibonacciSphere(particleCount, sphereRadius), [particleCount, sphereRadius])
   const explodePos = useMemo(() => explodeTargets(particleCount), [particleCount])
-  const ringPos    = useMemo(() => ringPositions(particleCount, sphereRadius * 1.5), [particleCount, sphereRadius])
+  const ringPos    = useMemo(() => ringPositions(particleCount, sphereRadius * 1.4), [particleCount, sphereRadius])
+  const originPos  = useMemo(() => originPositions(particleCount), [particleCount])
 
-  const curPos  = useRef(new Float32Array(particleCount * 3))        // start at 0,0,0
-  const vel     = useRef(new Float32Array(particleCount * 3))
-  const phase   = useRef('spawning')   // spawning | idle | exploding | ring | logo
-  const spawnT  = useRef(0)
-  const explodeT = useRef(0)
+  const curPos = useRef(new Float32Array(particleCount * 3))
+  const vel    = useRef(new Float32Array(particleCount * 3))
+  const alphas = useRef(new Float32Array(particleCount).fill(1))
+  const phase  = useRef('spawning')
+  const spawnT = useRef(0)
 
   const sizes = useMemo(() => {
     const s = new Float32Array(particleCount)
-    for (let i = 0; i < particleCount; i++) s[i] = 0.6 + Math.random()
+    for (let i = 0; i < particleCount; i++) s[i] = 0.5 + Math.random() * 0.9
     return s
   }, [particleCount])
 
@@ -93,11 +104,12 @@ function Particles({ sphereState, onReady, mouseNDC, particleCount, sphereRadius
     const geo = new THREE.BufferGeometry()
     geo.setAttribute('position', new THREE.BufferAttribute(curPos.current, 3))
     geo.setAttribute('aSize',    new THREE.BufferAttribute(sizes, 1))
+    geo.setAttribute('aAlpha',   new THREE.BufferAttribute(alphas.current, 1))
     return geo
   }, [sizes])
 
   const material = useMemo(() => new THREE.ShaderMaterial({
-    uniforms:       { uColor: { value: new THREE.Color(0.08, 0.08, 0.08) } },
+    uniforms:       { uColor: { value: new THREE.Color(0.07, 0.07, 0.07) } },
     vertexShader:   VERT,
     fragmentShader: FRAG,
     transparent:    true,
@@ -105,29 +117,26 @@ function Particles({ sphereState, onReady, mouseNDC, particleCount, sphereRadius
     blending:       THREE.NormalBlending,
   }), [])
 
-  // Sync phase with external sphereState
   useEffect(() => {
-    if (sphereState === 'exploding') {
-      phase.current  = 'exploding'
-      explodeT.current = 0
-    } else if (sphereState === 'ring') {
-      phase.current = 'ring'
-    } else if (sphereState === 'logo') {
-      phase.current = 'logo'
-    }
+    if      (sphereState === 'imploding')  phase.current = 'imploding'
+    else if (sphereState === 'exploding')  phase.current = 'exploding'
+    else if (sphereState === 'ring')       phase.current = 'ring'
+    else if (sphereState === 'logo')       phase.current = 'logo'
+    else if (sphereState === 'idle')       phase.current = phase.current === 'spawning' ? 'spawning' : 'idle'
   }, [sphereState])
 
-  const raycaster = useMemo(() => new THREE.Raycaster(), [])
-  const plane     = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), [])
+  const raycaster  = useMemo(() => new THREE.Raycaster(), [])
+  const plane      = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), [])
   const mouseWorld = useMemo(() => new THREE.Vector3(), [])
 
   useFrame((_, dt) => {
     if (!ref.current) return
-    const posAttr = ref.current.geometry.attributes.position
+    const posAttr   = ref.current.geometry.attributes.position
+    const alphaAttr = ref.current.geometry.attributes.aAlpha
     const cur = curPos.current
     const p   = phase.current
 
-    // Project mouse to 3D plane (z=0)
+    // Mouse repulsion world pos
     let mx = 0, my = 0, mz = 0
     if (mouseNDC.current && p === 'idle') {
       raycaster.setFromCamera(mouseNDC.current, camera)
@@ -135,73 +144,70 @@ function Particles({ sphereState, onReady, mouseNDC, particleCount, sphereRadius
       mx = mouseWorld.x; my = mouseWorld.y; mz = mouseWorld.z
     }
 
-    // ── Spawn animation (1.2s easing) ──────────────────────────────────────
+    // ── Spawn ──────────────────────────────────────────────────────────────
     if (p === 'spawning') {
-      spawnT.current = Math.min(1, spawnT.current + dt / 1.2)
-      const t = 1 - Math.pow(1 - spawnT.current, 3) // ease-out-cubic
-      for (let i = 0; i < particleCount * 3; i++) {
-        cur[i] = homePos[i] * t
-      }
-      if (spawnT.current >= 1) {
-        phase.current = 'idle'
-        onReady?.()
-      }
-      posAttr.array.set(cur)
-      posAttr.needsUpdate = true
+      spawnT.current = Math.min(1, spawnT.current + dt / 1.4)
+      const t = 1 - Math.pow(1 - spawnT.current, 3)
+      for (let i = 0; i < particleCount * 3; i++) cur[i] = homePos[i] * t
+      for (let i = 0; i < particleCount; i++)     alphas.current[i] = Math.min(1, spawnT.current * 2)
+      if (spawnT.current >= 1) { phase.current = 'idle'; onReady?.() }
+      posAttr.array.set(cur); posAttr.needsUpdate = true
+      alphaAttr.array.set(alphas.current); alphaAttr.needsUpdate = true
       return
     }
 
-    // ── Choose target ───────────────────────────────────────────────────────
+    // ── Choose target & lerp speed ─────────────────────────────────────────
     let target, lerpK
-    if (p === 'idle')      { target = homePos;    lerpK = 0.035 }
-    else if (p === 'exploding') { target = explodePos; lerpK = 0.10 }
-    else if (p === 'ring')  { target = ringPos;   lerpK = 0.06 }
-    else if (p === 'logo')  { target = ringPos;   lerpK = 0.10 }
-    else                    { target = homePos;   lerpK = 0.035 }
+    if      (p === 'idle')      { target = homePos;    lerpK = 0.032 }
+    else if (p === 'imploding') { target = originPos;  lerpK = 0.14  }
+    else if (p === 'exploding') { target = explodePos; lerpK = 0.11  }
+    else if (p === 'ring')      { target = ringPos;    lerpK = 0.065 }
+    else if (p === 'logo')      { target = originPos;  lerpK = 0.10  }
+    else                        { target = homePos;    lerpK = 0.032 }
 
-    // ── Slow rotation in idle ───────────────────────────────────────────────
-    if (p === 'idle') {
-      ref.current.rotation.y += dt * 0.09
-    }
+    // ── Slow rotation in idle ──────────────────────────────────────────────
+    if (p === 'idle') ref.current.rotation.y += dt * 0.08
 
-    const REPULSE_R = 0.9
+    // ── Alpha fade for logo (vanish) ───────────────────────────────────────
+    const targetAlpha = (p === 'logo') ? 0 : 1
+
+    const REPULSE_R = 0.85
 
     for (let i = 0; i < particleCount; i++) {
       const idx = i * 3
 
-      // Mouse repulsion (idle only)
+      // Mouse repulsion
       if (p === 'idle' && mouseNDC.current) {
-        const dx = cur[idx]     - mx
-        const dy = cur[idx + 1] - my
-        const dz = cur[idx + 2] - mz
-        const d2 = dx * dx + dy * dy + dz * dz
+        const dx = cur[idx] - mx, dy = cur[idx+1] - my, dz = cur[idx+2] - mz
+        const d2 = dx*dx + dy*dy + dz*dz
         if (d2 < REPULSE_R * REPULSE_R) {
-          const d    = Math.sqrt(d2) || 0.001
-          const force = (REPULSE_R - d) / REPULSE_R * 0.04
-          vel.current[idx]     += (dx / d) * force
-          vel.current[idx + 1] += (dy / d) * force
-          vel.current[idx + 2] += (dz / d) * force
+          const d = Math.sqrt(d2) || 0.001
+          const force = (REPULSE_R - d) / REPULSE_R * 0.038
+          vel.current[idx]   += (dx/d) * force
+          vel.current[idx+1] += (dy/d) * force
+          vel.current[idx+2] += (dz/d) * force
         }
       }
 
-      // Damp velocity
-      vel.current[idx]     *= 0.88
-      vel.current[idx + 1] *= 0.88
-      vel.current[idx + 2] *= 0.88
-
-      // Integrate velocity
-      cur[idx]     += vel.current[idx]
-      cur[idx + 1] += vel.current[idx + 1]
-      cur[idx + 2] += vel.current[idx + 2]
+      // Damp + integrate velocity
+      vel.current[idx]   *= 0.86
+      vel.current[idx+1] *= 0.86
+      vel.current[idx+2] *= 0.86
+      cur[idx]   += vel.current[idx]
+      cur[idx+1] += vel.current[idx+1]
+      cur[idx+2] += vel.current[idx+2]
 
       // Lerp toward target
-      cur[idx]     += (target[idx]     - cur[idx])     * lerpK
-      cur[idx + 1] += (target[idx + 1] - cur[idx + 1]) * lerpK
-      cur[idx + 2] += (target[idx + 2] - cur[idx + 2]) * lerpK
+      cur[idx]   += (target[idx]   - cur[idx])   * lerpK
+      cur[idx+1] += (target[idx+1] - cur[idx+1]) * lerpK
+      cur[idx+2] += (target[idx+2] - cur[idx+2]) * lerpK
+
+      // Alpha
+      alphas.current[i] += (targetAlpha - alphas.current[i]) * 0.07
     }
 
-    posAttr.array.set(cur)
-    posAttr.needsUpdate = true
+    posAttr.array.set(cur);     posAttr.needsUpdate   = true
+    alphaAttr.array.set(alphas.current); alphaAttr.needsUpdate = true
   })
 
   return <points ref={ref} geometry={geometry} material={material} />
@@ -214,27 +220,25 @@ function playSphereSound() {
     const ctx  = new AudioContext()
     const osc  = ctx.createOscillator()
     const gain = ctx.createGain()
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    osc.frequency.setValueAtTime(440, ctx.currentTime)
-    gain.gain.setValueAtTime(0.06, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06)
-    osc.start(ctx.currentTime)
-    osc.stop(ctx.currentTime + 0.06)
+    osc.connect(gain); gain.connect(ctx.destination)
+    osc.frequency.setValueAtTime(520, ctx.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.12)
+    gain.gain.setValueAtTime(0.07, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18)
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.18)
   } catch {}
 }
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export default function ParticleSphere({ sphereState, onSphereClick, isLogoMode }) {
-  const mouseNDC    = useRef(null)
+  const mouseNDC   = useRef(null)
   const [hovered, setHovered] = useState(false)
   const [ready, setReady]     = useState(false)
 
-  const isMobile       = window.innerWidth < 768
-  const particleCount  = isMobile ? 2200 : 4200
-  const sphereRadius   = isMobile ? 1.6 : 2.2
-  const logoSize       = 72
+  const isMobile      = window.innerWidth < 768
+  const particleCount = isMobile ? 1800 : 3600
+  const sphereRadius  = isMobile ? 1.5 : 2.1
 
   const handleMouseMove = useCallback((e) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -256,7 +260,6 @@ export default function ParticleSphere({ sphereState, onSphereClick, isLogoMode 
     onSphereClick?.()
   }, [ready, isLogoMode, onSphereClick])
 
-  // Touch support
   const handleTouchMove = useCallback((e) => {
     const touch = e.touches[0]
     const rect  = e.currentTarget.getBoundingClientRect()
@@ -267,62 +270,67 @@ export default function ParticleSphere({ sphereState, onSphereClick, isLogoMode 
   }, [])
 
   return (
-    <motion.div
-      className="fixed z-0 overflow-hidden"
-      style={{ background: 'transparent' }}
-      animate={isLogoMode ? {
-        top:          16,
-        left:         16,
-        width:        logoSize,
-        height:       logoSize,
-        borderRadius: logoSize / 2,
-      } : {
-        top:          0,
-        left:         0,
-        width:        '100vw',
-        height:       '100vh',
-        borderRadius: 0,
-      }}
-      transition={{ type: 'spring', stiffness: 180, damping: 26 }}
-    >
-      {/* Three.js canvas */}
-      <Canvas
-        camera={{ position: [0, 0, 5.5], fov: 55 }}
-        gl={{ antialias: false, alpha: true }}
-        style={{ background: 'transparent', cursor: isLogoMode ? 'default' : 'none' }}
+    <>
+      {/* Canvas always full-screen — never resizes so no viewport distortion */}
+      <div
+        className="fixed inset-0 z-0"
+        style={{ pointerEvents: isLogoMode ? 'none' : 'auto' }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
         onTouchMove={handleTouchMove}
       >
-        <Particles
-          sphereState={sphereState}
-          onReady={() => setReady(true)}
-          mouseNDC={mouseNDC}
-          particleCount={particleCount}
-          sphereRadius={sphereRadius}
-        />
-      </Canvas>
+        <Canvas
+          camera={{ position: [0, 0, 5.5], fov: 55 }}
+          gl={{ antialias: false, alpha: true }}
+          style={{ background: 'transparent', cursor: isLogoMode ? 'default' : 'none' }}
+        >
+          <Particles
+            sphereState={sphereState}
+            onReady={() => setReady(true)}
+            mouseNDC={mouseNDC}
+            particleCount={particleCount}
+            sphereRadius={sphereRadius}
+          />
+        </Canvas>
 
-      {/* "Drop a link." center text — only in full sphere mode */}
-      <AnimatePresence>
-        {!isLogoMode && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: ready ? (hovered ? 0.75 : 0.15) : 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
-          >
-            <span
-              className="text-rw-ink font-light text-2xl md:text-3xl"
-              style={{ letterSpacing: '0.3em' }}
+        {/* "Drop a link." label */}
+        <AnimatePresence>
+          {!isLogoMode && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: ready ? (hovered ? 0.7 : 0.12) : 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
             >
-              Drop a link.
-            </span>
+              <span
+                className="text-rw-ink font-light text-2xl md:text-3xl"
+                style={{ letterSpacing: '0.32em' }}
+              >
+                Drop a link.
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Logo circle — pure CSS, appears in top-left after click */}
+      <AnimatePresence>
+        {isLogoMode && (
+          <motion.div
+            initial={{ scale: 0, opacity: 0, x: -20, y: -20 }}
+            animate={{ scale: 1, opacity: 1, x: 0, y: 0 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 280, damping: 24, delay: 0.15 }}
+            className="fixed top-4 left-4 w-14 h-14 rounded-full bg-rw-ink z-10
+                       flex items-center justify-center cursor-default select-none"
+            style={{ boxShadow: '0 4px 20px rgba(10,10,10,0.18)' }}
+          >
+            <span className="text-white font-bold text-xs tracking-widest">RW</span>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </>
   )
 }
