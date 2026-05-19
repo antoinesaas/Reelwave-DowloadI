@@ -19,6 +19,8 @@ app = FastAPI(title="ReelWave API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "https://reelwave.fr",
+        "https://www.reelwave.fr",
         "https://reelwave.com",
         "https://www.reelwave.com",
         "http://localhost:5173",
