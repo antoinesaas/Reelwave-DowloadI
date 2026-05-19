@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 
 const QUALITIES = [
   { id: '4K',    label: '4K',    desc: '2160p' },
   { id: '1080p', label: '1080p', desc: 'Full HD' },
   { id: '720p',  label: '720p',  desc: 'HD'      },
   { id: '480p',  label: '480p',  desc: 'SD'      },
-  { id: 'MP3',   label: '♪',     desc: 'MP3'    },
+  { id: 'MP3',   label: '♪',     desc: 'MP3'     },
 ]
 
 export default function QualityBubbles({ onSelect, initialQuality = '1080p' }) {
@@ -18,66 +18,39 @@ export default function QualityBubbles({ onSelect, initialQuality = '1080p' }) {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="flex flex-col items-center gap-6"
-    >
-      <p className="text-rw-muted text-sm font-medium tracking-wide">
-        Choisir la qualité
+    <div className="flex flex-col items-center gap-3 w-full">
+      <p className="text-rw-muted text-xs font-medium tracking-widest uppercase">
+        Qualité
       </p>
 
-      {/* Bubbles row */}
-      <div className="flex items-end justify-center gap-3 flex-wrap">
-        {QUALITIES.map((q, i) => (
-          <motion.button
-            key={q.id}
-            onClick={() => handleSelect(q.id)}
-            initial={{ opacity: 0, y: 60, scale: 0.6 }}
-            animate={{ opacity: 1, y: 0,  scale: 1   }}
-            transition={{
-              type:      'spring',
-              stiffness: 320,
-              damping:   22,
-              delay:     i * 0.08,
-            }}
-            whileHover={{ scale: selected === q.id ? 1.15 : 1.08 }}
-            whileTap={{ scale: 0.92 }}
-            className={`relative w-20 h-20 rounded-full flex flex-col items-center justify-center
-                        transition-all duration-200 select-none
-                        ${selected === q.id ? 'bubble-selected' : 'liquid-bubble hover:shadow-md'}`}
-            style={{
-              // Float animation for unselected bubbles
-              animation: selected === q.id
-                ? 'none'
-                : `float ${3.5 + i * 0.4}s ease-in-out ${i * 0.2}s infinite`,
-            }}
-          >
-            {/* Label */}
-            <span
-              className={`text-sm font-bold leading-none
-                          ${selected === q.id ? 'text-rw-bg' : 'text-rw-ink'}`}
+      <div className="flex items-center justify-center gap-2 flex-wrap w-full px-2">
+        {QUALITIES.map((q, i) => {
+          const isSelected = selected === q.id
+          return (
+            <motion.button
+              key={q.id}
+              onClick={() => handleSelect(q.id)}
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 24, delay: i * 0.06 }}
+              whileTap={{ scale: 0.92 }}
+              className={`relative flex flex-col items-center justify-center rounded-full
+                          w-14 h-14 md:w-[72px] md:h-[72px]
+                          transition-all duration-200 select-none shrink-0
+                          ${isSelected ? 'bubble-selected' : 'liquid-bubble'}`}
             >
-              {q.label}
-            </span>
-            <span
-              className={`text-[9px] mt-0.5 font-medium
-                          ${selected === q.id ? 'text-rw-bg/70' : 'text-rw-muted'}`}
-            >
-              {q.desc}
-            </span>
-
-            {/* Selected ring glow */}
-            {selected === q.id && (
-              <motion.span
-                layoutId="bubble-ring"
-                className="absolute inset-0 rounded-full border-2 border-rw-ink"
-                style={{ boxShadow: '0 0 24px rgba(245,245,245,0.15)' }}
-              />
-            )}
-          </motion.button>
-        ))}
+              <span className={`text-xs md:text-sm font-bold leading-none
+                                ${isSelected ? 'text-rw-bg' : 'text-rw-ink'}`}>
+                {q.label}
+              </span>
+              <span className={`text-[8px] md:text-[9px] mt-0.5 font-medium
+                                ${isSelected ? 'text-rw-bg/70' : 'text-rw-muted'}`}>
+                {q.desc}
+              </span>
+            </motion.button>
+          )
+        })}
       </div>
-    </motion.div>
+    </div>
   )
 }

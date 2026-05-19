@@ -153,14 +153,14 @@ export default function App() {
         {phase === 'input' && (
           <motion.div
             key="input-overlay"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            className="fixed inset-0 flex items-center justify-center px-4 pointer-events-none z-20"
-            style={{ paddingTop: 40 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-x-0 bottom-0 md:inset-0 flex items-end md:items-center
+                       justify-center px-3 pb-6 md:pb-0 pointer-events-none z-20"
           >
-            <div className="pointer-events-auto w-full max-w-lg">
+            <div className="pointer-events-auto w-full max-w-md">
               <PastePanel
                 onValidUrl={handleValidUrl}
                 onClose={() => { setPhase('hero'); setIsLogoMode(false); setSphereState('idle') }}
@@ -169,79 +169,64 @@ export default function App() {
           </motion.div>
         )}
 
-        {/* QUALITY phase: bubbles + download button */}
+        {/* QUALITY phase */}
         {phase === 'quality' && (
           <motion.div
             key="quality-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 flex flex-col items-center justify-center gap-6 md:gap-8 px-4 z-20"
-            style={{ paddingTop: 60 }}
+            className="fixed inset-0 z-20 flex flex-col items-center justify-center
+                       px-4 gap-4 overflow-y-auto"
           >
             {/* Video preview card */}
             {(videoInfo || infoLoading) && (
               <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0  }}
-                className="glass-card rounded-[16px] p-3 flex items-center gap-3
-                           w-full max-w-sm"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-card rounded-2xl p-3 flex items-center gap-3 w-full max-w-xs shrink-0"
               >
                 {infoLoading ? (
-                  <div className="w-12 h-12 rounded-[8px] bg-rw-border/40 animate-pulse shrink-0" />
+                  <div className="w-10 h-10 rounded-lg bg-white/10 animate-pulse shrink-0" />
                 ) : (
-                  <img
-                    src={videoInfo.thumbnail}
-                    alt=""
-                    className="w-12 h-12 rounded-[8px] object-cover shrink-0"
-                  />
+                  <img src={videoInfo.thumbnail} alt=""
+                    className="w-10 h-10 rounded-lg object-cover shrink-0" />
                 )}
                 <div className="min-w-0">
-                  <p className="text-rw-ink text-[13px] font-semibold truncate">
-                    {infoLoading ? '…' : videoInfo?.title || currentUrl.substring(0, 45)}
+                  <p className="text-rw-ink text-xs font-semibold truncate">
+                    {infoLoading ? '…' : videoInfo?.title || currentUrl.substring(0, 40)}
                   </p>
-                  <p className="text-rw-muted text-[11px] mt-0.5">
+                  <p className="text-rw-muted text-[10px] mt-0.5">
                     {infoLoading ? '…' : videoInfo?.platform || ''}
                   </p>
                 </div>
               </motion.div>
             )}
 
-            <QualityBubbles
-              onSelect={handleQualitySelect}
-              initialQuality={selectedQuality}
-            />
+            <QualityBubbles onSelect={handleQualitySelect} initialQuality={selectedQuality} />
 
-            {/* Download pill button */}
             <motion.button
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0  }}
-              transition={{ delay: 0.45 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
               onClick={handleDownload}
-              className="bg-rw-ink text-rw-bg px-10 py-4 rounded-full
-                         text-[15px] font-semibold tracking-wide
-                         hover:bg-white transition-all duration-200
-                         hover:shadow-[0_8px_30px_rgba(255,255,255,0.15)]
-                         active:scale-[0.98]"
-              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
+              className="bg-rw-ink text-rw-bg w-full max-w-xs py-4 rounded-2xl
+                         text-[15px] font-semibold tracking-wide shrink-0
+                         active:scale-[0.98] transition-all duration-200"
             >
               Télécharger →
             </motion.button>
 
             {backendError && (
-              <motion.p
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-red-500 text-xs text-center max-w-xs px-4"
-              >
+              <p className="text-rw-error text-xs text-center max-w-[280px] leading-relaxed">
                 ⚠ {backendError}
-              </motion.p>
+              </p>
             )}
 
             <button
               onClick={() => { setPhase('input'); setBackendError(''); setVideoInfo(null) }}
-              className="text-sm text-rw-muted hover:text-rw-ink transition-colors px-4 py-2"
+              className="text-sm text-rw-muted py-2 px-4"
             >
               ← changer le lien
             </button>
@@ -252,8 +237,10 @@ export default function App() {
         {(phase === 'downloading' || phase === 'done') && job && (
           <motion.div
             key="download-card-wrapper"
-            className="fixed bottom-6 right-6 md:bottom-8 md:right-8
-                       w-[calc(100vw-32px)] md:w-80 pointer-events-auto z-40"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0  }}
+            className="fixed bottom-4 left-3 right-3 md:left-auto md:right-8
+                       md:bottom-8 md:w-80 pointer-events-auto z-40"
           >
             <DownloadCard
               job={job}
