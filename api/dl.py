@@ -55,12 +55,8 @@ class handler(BaseHTTPRequestHandler):
                 "socket_timeout": 10,
                 "extractor_args": {
                     "youtube": {
-                        "player_client": ["android", "web"],
-                        "skip": ["hls"],
+                        "player_client": ["ios", "android", "tv_embedded"],
                     }
-                },
-                "http_headers": {
-                    "User-Agent": "com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip"
                 },
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
