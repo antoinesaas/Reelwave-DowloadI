@@ -109,7 +109,7 @@ function Particles({ sphereState, onReady, mouseNDC, particleCount, sphereRadius
   }, [sizes])
 
   const material = useMemo(() => new THREE.ShaderMaterial({
-    uniforms:       { uColor: { value: new THREE.Color(0.07, 0.07, 0.07) } },
+    uniforms:       { uColor: { value: new THREE.Color(0.92, 0.92, 0.92) } },
     vertexShader:   VERT,
     fragmentShader: FRAG,
     transparent:    true,
@@ -308,10 +308,9 @@ export default function ParticleSphere({ sphereState, onSphereClick, isLogoMode 
               transition={{ duration: 0.5 }}
               className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
             >
-              <span
-                className="text-rw-ink font-light text-2xl md:text-3xl"
-                style={{ letterSpacing: '0.32em' }}
-              >
+            <span
+              className="text-rw-ink font-light text-2xl md:text-3xl tracking-[0.32em]"
+            >
                 Drop a link.
               </span>
             </motion.div>
@@ -319,22 +318,6 @@ export default function ParticleSphere({ sphereState, onSphereClick, isLogoMode 
         </AnimatePresence>
       </div>
 
-      {/* Logo circle — pure CSS, appears in top-left after click */}
-      <AnimatePresence>
-        {isLogoMode && (
-          <motion.div
-            initial={{ scale: 0, opacity: 0, x: -20, y: -20 }}
-            animate={{ scale: 1, opacity: 1, x: 0, y: 0 }}
-            exit={{ scale: 0, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 280, damping: 24, delay: 0.15 }}
-            className="fixed top-4 left-4 w-14 h-14 rounded-full bg-rw-ink z-10
-                       flex items-center justify-center cursor-default select-none"
-            style={{ boxShadow: '0 4px 20px rgba(10,10,10,0.18)' }}
-          >
-            <span className="text-white font-bold text-xs tracking-widest">RW</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   )
 }

@@ -126,7 +126,7 @@ export default function App() {
   }, [reset])
 
   return (
-    <div className="w-full h-full bg-white relative overflow-hidden select-none">
+    <div className="w-full h-full bg-rw-bg relative overflow-hidden select-none">
       <CustomCursor />
 
       {/* ── Particle sphere (always mounted) ── */}
@@ -223,10 +223,10 @@ export default function App() {
               animate={{ opacity: 1, y: 0  }}
               transition={{ delay: 0.45 }}
               onClick={handleDownload}
-              className="bg-rw-ink text-white px-10 py-4 rounded-full
+              className="bg-rw-ink text-rw-bg px-10 py-4 rounded-full
                          text-[15px] font-semibold tracking-wide
-                         hover:bg-[#1a1a1a] transition-all duration-200
-                         hover:shadow-[0_8px_30px_rgba(10,10,10,0.25)]
+                         hover:bg-white transition-all duration-200
+                         hover:shadow-[0_8px_30px_rgba(255,255,255,0.15)]
                          active:scale-[0.98]"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}

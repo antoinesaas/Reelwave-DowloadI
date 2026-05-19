@@ -56,13 +56,13 @@ export default function QualityBubbles({ onSelect, initialQuality = '1080p' }) {
             {/* Label */}
             <span
               className={`text-sm font-bold leading-none
-                          ${selected === q.id ? 'text-white' : 'text-rw-ink'}`}
+                          ${selected === q.id ? 'text-rw-bg' : 'text-rw-ink'}`}
             >
               {q.label}
             </span>
             <span
               className={`text-[9px] mt-0.5 font-medium
-                          ${selected === q.id ? 'text-white/70' : 'text-rw-muted'}`}
+                          ${selected === q.id ? 'text-rw-bg/70' : 'text-rw-muted'}`}
             >
               {q.desc}
             </span>
@@ -72,7 +72,7 @@ export default function QualityBubbles({ onSelect, initialQuality = '1080p' }) {
               <motion.span
                 layoutId="bubble-ring"
                 className="absolute inset-0 rounded-full border-2 border-rw-ink"
-                style={{ boxShadow: '0 0 24px rgba(10,10,10,0.2)' }}
+                style={{ boxShadow: '0 0 24px rgba(245,245,245,0.15)' }}
               />
             )}
           </motion.button>

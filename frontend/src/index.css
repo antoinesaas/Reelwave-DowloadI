@@ -3,53 +3,56 @@
 @tailwind utilities;
 
 @layer base {
-  body { cursor: none; } /* custom cursor handles it */
+  body {
+    cursor: none;
+    background: #0A0A0A;
+    color: #F5F5F5;
+  }
 }
 
 @layer components {
   .glass-card {
-    background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid rgba(224, 224, 224, 0.8);
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08), 0 1px 0 rgba(255,255,255,0.9) inset;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255,255,255,0.06) inset;
   }
 
   .liquid-bubble {
-    background: rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(20px) saturate(200%);
-    -webkit-backdrop-filter: blur(20px) saturate(200%);
-    border: 1px solid rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.10);
     box-shadow:
-      0 4px 24px rgba(0, 0, 0, 0.06),
-      0 1px 0 rgba(255, 255, 255, 0.95) inset,
-      0 -1px 0 rgba(0, 0, 0, 0.04) inset;
+      0 4px 24px rgba(0, 0, 0, 0.35),
+      0 1px 0 rgba(255, 255, 255, 0.08) inset;
   }
 
   .bubble-selected {
-    background: #0A0A0A;
-    border-color: #0A0A0A;
-    box-shadow: 0 4px 24px rgba(10, 10, 10, 0.25);
+    background: #F5F5F5;
+    border-color: #F5F5F5;
+    box-shadow: 0 4px 24px rgba(245, 245, 245, 0.18);
   }
 
   .progress-bar-track {
-    background: rgba(10, 10, 10, 0.08);
+    background: rgba(255, 255, 255, 0.10);
     border-radius: 99px;
     overflow: hidden;
   }
 
   .progress-bar-fill {
-    background: #0A0A0A;
+    background: #F5F5F5;
     height: 100%;
     border-radius: 99px;
     transition: width 0.3s ease;
   }
 }
 
-/* Platform badge colors */
-.badge-youtube   { background: #FF000015; color: #CC0000; border-color: #FF000030; }
-.badge-tiktok    { background: #00000010; color: #000000; border-color: #00000025; }
-.badge-instagram { background: #E1306C15; color: #B31556; border-color: #E1306C30; }
-.badge-pinterest { background: #E6002315; color: #B8001C; border-color: #E6002330; }
-.badge-twitter   { background: #00000010; color: #000000; border-color: #00000025; }
-.badge-web       { background: #6E6E7315; color: #4A4A50; border-color: #6E6E7330; }
+/* Platform badge colors — dark variant */
+.badge-youtube   { background: rgba(255,0,0,0.12);   color: #FF6B6B; border-color: rgba(255,0,0,0.25); }
+.badge-tiktok    { background: rgba(255,255,255,0.08); color: #E5E5E5; border-color: rgba(255,255,255,0.18); }
+.badge-instagram { background: rgba(225,48,108,0.12); color: #F06292; border-color: rgba(225,48,108,0.25); }
+.badge-pinterest { background: rgba(230,0,35,0.12);   color: #EF5350; border-color: rgba(230,0,35,0.25); }
+.badge-twitter   { background: rgba(255,255,255,0.08); color: #E5E5E5; border-color: rgba(255,255,255,0.18); }
+.badge-web       { background: rgba(142,142,147,0.12); color: #AEAEB2; border-color: rgba(142,142,147,0.25); }

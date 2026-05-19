@@ -131,12 +131,12 @@ export default function PastePanel({ onValidUrl, onClose }) {
       >
         <div
           className={`flex items-center gap-3 rounded-[14px] border transition-all duration-200
-                      bg-white/60 px-4 py-3
+                      bg-white/5 px-4 py-3
                       ${invalid
-                        ? 'border-red-400 shadow-[0_0_0_3px_rgba(239,68,68,0.15)]'
+                        ? 'border-rw-error shadow-[0_0_0_3px_rgba(248,113,113,0.12)]'
                         : url && isValidUrl(url)
-                          ? 'border-rw-ink shadow-[0_0_0_3px_rgba(10,10,10,0.08)]'
-                          : 'border-rw-border focus-within:border-rw-ink'
+                          ? 'border-white/40 shadow-[0_0_0_3px_rgba(255,255,255,0.06)]'
+                          : 'border-rw-border focus-within:border-white/30'
                       }`}
         >
           <input
@@ -189,8 +189,8 @@ export default function PastePanel({ onValidUrl, onClose }) {
         className={`mt-4 w-full py-3 rounded-[12px] text-[15px] font-semibold
                     transition-all duration-200 active:scale-[0.99]
                     ${url && isValidUrl(url)
-                      ? 'bg-rw-ink text-white hover:bg-[#1a1a1a] hover:shadow-lg'
-                      : 'bg-rw-border text-rw-muted cursor-not-allowed'
+                      ? 'bg-rw-ink text-rw-bg hover:bg-white hover:shadow-lg'
+                      : 'bg-white/8 text-rw-muted cursor-not-allowed border border-rw-border'
                     }`}
         whileHover={url && isValidUrl(url) ? { scale: 1.015 } : {}}
         whileTap={{ scale: 0.98 }}

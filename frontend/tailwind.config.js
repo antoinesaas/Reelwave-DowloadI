@@ -5,13 +5,13 @@ export default {
     extend: {
       colors: {
         rw: {
-          bg:      '#FFFFFF',
-          ink:     '#0A0A0A',
-          muted:   '#6E6E73',
-          border:  '#E0E0E0',
-          surface: 'rgba(255,255,255,0.72)',
-          success: '#22C55E',
-          error:   '#EF4444',
+          bg:      '#0A0A0A',
+          ink:     '#F5F5F5',
+          muted:   '#8E8E93',
+          border:  'rgba(255,255,255,0.12)',
+          surface: 'rgba(255,255,255,0.06)',
+          success: '#34D399',
+          error:   '#F87171',
         },
       },
       fontFamily: {
