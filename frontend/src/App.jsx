@@ -21,6 +21,7 @@ export default function App() {
   const [videoInfo, setVideoInfo]    = useState(null)
   const [showHistory, setShowHistory] = useState(false)
   const [infoLoading, setInfoLoading] = useState(false)
+  const [backendError, setBackendError] = useState('')
 
   const { job, fetchInfo, startDownload, cancel, reset } = useDownload()
   const { history, add: addHistory, clear: clearHistory } = useHistory()
@@ -47,13 +48,19 @@ export default function App() {
   const handleValidUrl = useCallback(async (url) => {
     setCurrentUrl(url)
     setInfoLoading(true)
+    setBackendError('')
     setPhase('quality')
 
     try {
       const info = await fetchInfo(url)
       setVideoInfo(info)
     } catch (e) {
-      console.warn('Info fetch failed, proceeding anyway:', e.message)
+      const isNetErr = !e.response
+      setBackendError(
+        isNetErr
+          ? 'Serveur non disponible. Le backend n\'est pas encore déployé.'
+          : (e.response?.data?.detail || 'Impossible de récupérer les infos.')
+      )
     } finally {
       setInfoLoading(false)
     }
@@ -65,11 +72,18 @@ export default function App() {
   }, [])
 
   const handleDownload = useCallback(async () => {
+    setBackendError('')
     setPhase('downloading')
     try {
-      const jobId = await startDownload(currentUrl, selectedQuality)
+      await startDownload(currentUrl, selectedQuality)
     } catch (err) {
-      console.error('Download start error:', err)
+      const isNetErr = !err.response
+      setBackendError(
+        isNetErr
+          ? 'Serveur non disponible. Déploie le backend pour activer les téléchargements.'
+          : (err.response?.data?.detail || 'Erreur lors du démarrage.')
+      )
+      setPhase('quality')
     }
   }, [currentUrl, selectedQuality, startDownload])
 
@@ -216,6 +230,16 @@ export default function App() {
             >
               Télécharger →
             </motion.button>
+
+            {backendError && (
+              <motion.p
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-red-500 text-xs text-center max-w-xs px-4"
+              >
+                ⚠ {backendError}
+              </motion.p>
+            )}
 
             <button
               onClick={() => setPhase('input')}

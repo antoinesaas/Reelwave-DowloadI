@@ -34,15 +34,9 @@ export default function PastePanel({ onValidUrl, onClose }) {
   const [shaking, setShaking]   = useState(false)
   const inputRef = useRef()
 
-  // Auto-focus + auto-paste from clipboard
+  // Auto-focus on mount
   useEffect(() => {
     inputRef.current?.focus()
-    navigator.clipboard?.readText().then((text) => {
-      if (text && isValidUrl(text.trim())) {
-        setUrl(text.trim())
-        setPlatform(detectPlatform(text.trim()))
-      }
-    }).catch(() => {})
   }, [])
 
   const handleChange = useCallback((e) => {
@@ -51,6 +45,20 @@ export default function PastePanel({ onValidUrl, onClose }) {
     setInvalid(false)
     setPlatform(detectPlatform(v))
   }, [])
+
+  // Ctrl+V / right-click paste — works without clipboard permission
+  const handleNativePaste = useCallback((e) => {
+    const text = (e.clipboardData || window.clipboardData)?.getData('text')
+    if (!text) return
+    const v = text.trim()
+    setUrl(v)
+    setInvalid(false)
+    setPlatform(detectPlatform(v))
+    // If valid URL, auto-submit after short delay
+    if (isValidUrl(v)) {
+      setTimeout(() => onValidUrl(v), 150)
+    }
+  }, [onValidUrl])
 
   const handleSubmit = useCallback(() => {
     const trimmed = url.trim()
@@ -69,16 +77,22 @@ export default function PastePanel({ onValidUrl, onClose }) {
   }, [handleSubmit, onClose])
 
   const handlePaste = useCallback(async () => {
+    // Try Clipboard API first (HTTPS only), fall back silently
     try {
       const text = await navigator.clipboard.readText()
       if (text) {
         const v = text.trim()
         setUrl(v)
+        setInvalid(false)
         setPlatform(detectPlatform(v))
         inputRef.current?.focus()
+        if (isValidUrl(v)) setTimeout(() => onValidUrl(v), 150)
+        return
       }
     } catch {}
-  }, [])
+    // If permission blocked, focus input so user can Ctrl+V manually
+    inputRef.current?.focus()
+  }, [onValidUrl])
 
   return (
     <motion.div
@@ -131,6 +145,7 @@ export default function PastePanel({ onValidUrl, onClose }) {
             value={url}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
+            onPaste={handleNativePaste}
             placeholder="Colle ton lien ici…"
             className="flex-1 bg-transparent text-rw-ink text-[15px] font-medium
                        placeholder:text-rw-muted/50 outline-none min-w-0"

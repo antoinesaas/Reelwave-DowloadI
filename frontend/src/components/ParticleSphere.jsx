@@ -51,7 +51,7 @@ const VERT = /* glsl */`
   void main() {
     vAlpha = 1.0;
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = aSize * (380.0 / -mv.z);
+    gl_PointSize = aSize * (28.0 / -mv.z);
     gl_Position  = projectionMatrix * mv;
   }
 `
