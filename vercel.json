@@ -1,13 +1,8 @@
 {
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
-  "functions": {
-    "api/info.py": { "runtime": "python3.12", "maxDuration": 25 },
-    "api/dl.py":   { "runtime": "python3.12", "maxDuration": 25 }
-  },
   "rewrites": [
-    { "source": "/api/info", "destination": "/api/info.py" },
-    { "source": "/api/dl",   "destination": "/api/dl.py"   },
-    { "source": "/(.*)",     "destination": "/index.html"  }
+    { "source": "/api/:path*", "destination": "/api/:path*" },
+    { "source": "/(.*)",       "destination": "/index.html" }
   ]
 }

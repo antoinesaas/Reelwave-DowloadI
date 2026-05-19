@@ -97,9 +97,9 @@ export default function PastePanel({ onValidUrl, onClose }) {
   return (
     <motion.div
       key="paste-panel"
-      initial={{ opacity: 0, scale: 0.88, filter: 'blur(20px)' }}
-      animate={{ opacity: 1, scale: 1,    filter: 'blur(0px)'  }}
-      exit={{    opacity: 0, scale: 0.92, filter: 'blur(12px)' }}
+      initial={{ opacity: 0, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1   }}
+      exit={{    opacity: 0, scale: 0.94 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30, duration: 0.4 }}
       className="glass-card rounded-[20px] p-6 w-full max-w-lg mx-auto"
     >

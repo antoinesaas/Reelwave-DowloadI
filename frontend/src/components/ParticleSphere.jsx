@@ -300,17 +300,18 @@ export default function ParticleSphere({ sphereState, onSphereClick, isLogoMode 
 
         {/* "Drop a link." label */}
         <AnimatePresence>
-          {!isLogoMode && (
+          {!isLogoMode && ready && (
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: ready ? (hovered ? 0.7 : 0.12) : 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
               className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
             >
-            <span
-              className="text-rw-ink font-light text-2xl md:text-3xl tracking-[0.32em]"
-            >
+              <span
+                className="text-rw-ink font-light text-xl md:text-3xl"
+                style={{ letterSpacing: '0.28em', opacity: hovered ? 0.75 : 0.5 }}
+              >
                 Drop a link.
               </span>
             </motion.div>

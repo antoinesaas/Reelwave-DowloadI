@@ -4,9 +4,12 @@
 
 @layer base {
   body {
-    cursor: none;
+    cursor: auto;
     background: #0A0A0A;
     color: #F5F5F5;
+  }
+  @media (min-width: 768px) {
+    body { cursor: none; }
   }
 }
 

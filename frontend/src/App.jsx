@@ -127,7 +127,8 @@ export default function App() {
 
   return (
     <div className="w-full h-full bg-rw-bg relative overflow-hidden select-none">
-      <CustomCursor />
+      {/* Custom cursor — desktop only */}
+      <div className="hidden md:block"><CustomCursor /></div>
 
       {/* ── Particle sphere (always mounted) ── */}
       <ParticleSphere
@@ -139,21 +140,23 @@ export default function App() {
       {/* ── Overlay content ── */}
       <AnimatePresence mode="wait">
 
-        {/* HERO phase: click hint bottom */}
+        {/* HERO phase: tap hint */}
         {phase === 'hero' && (
           <motion.div
             key="hero-hint"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed bottom-10 left-0 right-0 flex justify-center pointer-events-none"
+            transition={{ delay: 1.2 }}
+            className="fixed bottom-8 left-0 right-0 flex justify-center pointer-events-none"
           >
             <motion.p
-              animate={{ y: [0, -6, 0] }}
+              animate={{ y: [0, -5, 0] }}
               transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-              className="text-rw-muted text-sm font-light tracking-widest"
+              className="text-rw-muted text-xs md:text-sm font-light tracking-widest"
             >
-              ↑ cliquer pour commencer
+              <span className="md:hidden">↑ appuyer pour commencer</span>
+              <span className="hidden md:inline">↑ cliquer pour commencer</span>
             </motion.p>
           </motion.div>
         )}
@@ -162,11 +165,11 @@ export default function App() {
         {phase === 'input' && (
           <motion.div
             key="input-overlay"
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="fixed inset-0 flex items-center justify-center px-4 pointer-events-none z-20"
-            style={{ paddingTop: 80 }}
+            className="fixed inset-0 flex items-end md:items-center justify-center px-4 pointer-events-none z-20"
+            style={{ paddingBottom: 32 }}
           >
             <div className="pointer-events-auto w-full max-w-lg">
               <PastePanel
@@ -184,8 +187,8 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 flex flex-col items-center justify-center gap-8 px-4 z-20"
-            style={{ paddingTop: 80 }}
+            className="fixed inset-0 flex flex-col items-center justify-center gap-6 md:gap-8 px-4 z-20"
+            style={{ paddingTop: 60 }}
           >
             {/* Video preview card */}
             {(videoInfo || infoLoading) && (
