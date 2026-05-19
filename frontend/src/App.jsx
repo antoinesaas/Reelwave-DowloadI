@@ -162,8 +162,11 @@ export default function App() {
         {phase === 'input' && (
           <motion.div
             key="input-overlay"
-            className="fixed inset-0 flex items-center justify-center px-4 pointer-events-none"
-            style={{ paddingTop: 100 }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="fixed inset-0 flex items-center justify-center px-4 pointer-events-none z-20"
+            style={{ paddingTop: 80 }}
           >
             <div className="pointer-events-auto w-full max-w-lg">
               <PastePanel
@@ -181,7 +184,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 flex flex-col items-center justify-center gap-8 px-4"
+            className="fixed inset-0 flex flex-col items-center justify-center gap-8 px-4 z-20"
             style={{ paddingTop: 80 }}
           >
             {/* Video preview card */}
@@ -245,8 +248,8 @@ export default function App() {
             )}
 
             <button
-              onClick={() => setPhase('input')}
-              className="text-xs text-rw-muted/60 hover:text-rw-muted transition-colors"
+              onClick={() => { setPhase('input'); setBackendError(''); setVideoInfo(null) }}
+              className="text-sm text-rw-muted hover:text-rw-ink transition-colors px-4 py-2"
             >
               ← changer le lien
             </button>
