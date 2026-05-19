@@ -1,108 +1,79 @@
-import { useState, useRef, useCallback } from 'react'
-import axios from 'axios'
+import { useState, useCallback } from 'react'
 
 const API = import.meta.env.VITE_API_URL || ''
 
 export function useDownload() {
   const [job, setJob] = useState(null)
-  const esRef = useRef(null)
 
   const fetchInfo = useCallback(async (url) => {
-    const res = await axios.post(`${API}/api/info`, { url })
-    return res.data
+    const res = await fetch(`${API}/api/info`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.detail || `Erreur ${res.status}`)
+    }
+    return res.json()
   }, [])
 
   const startDownload = useCallback(async (url, quality) => {
-    // Cancel existing job
-    if (esRef.current) { esRef.current.close(); esRef.current = null }
-
-    // Create the job
-    const { data } = await axios.post(`${API}/api/start`, { url, quality })
-    const jobId = data.job_id
-
     setJob({
-      jobId,
       url,
       quality,
-      status:  'downloading',
-      percent: 0,
-      speed:   '',
-      eta:     '',
-      title:   '',
+      status:    'loading',
+      percent:   0,
+      title:     '',
       thumbnail: '',
-      platform: '',
-      filename: '',
-      error: '',
+      filename:  '',
+      error:     '',
     })
 
-    // Open SSE stream
-    const es = new EventSource(`${API}/api/download/${jobId}`)
-    esRef.current = es
+    const res = await fetch(`${API}/api/dl`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, quality }),
+    })
 
-    es.onmessage = (e) => {
-      try {
-        const event = JSON.parse(e.data)
-
-        if (event.type === 'progress') {
-          setJob((prev) => prev ? {
-            ...prev,
-            percent: event.percent,
-            speed:   event.speed,
-            eta:     event.eta,
-          } : null)
-        }
-
-        else if (event.type === 'done') {
-          setJob((prev) => prev ? {
-            ...prev,
-            status:    'done',
-            percent:   100,
-            title:     event.title || prev.title,
-            thumbnail: event.thumbnail || prev.thumbnail,
-            filename:  event.filename || '',
-          } : null)
-          es.close()
-
-          // Trigger file download
-          const link = document.createElement('a')
-          link.href = `${API}/api/file/${jobId}`
-          link.download = event.filename || 'reelwave-download'
-          link.click()
-        }
-
-        else if (event.type === 'error') {
-          setJob((prev) => prev ? {
-            ...prev,
-            status: 'error',
-            error:  event.message || 'Erreur inconnue',
-          } : null)
-          es.close()
-        }
-
-      } catch {}
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      const msg = err.detail || `Erreur ${res.status}`
+      setJob((p) => p ? { ...p, status: 'error', error: msg } : null)
+      throw new Error(msg)
     }
 
-    es.onerror = () => {
-      setJob((prev) => prev?.status === 'downloading' ? {
-        ...prev,
-        status: 'error',
-        error: 'Connexion interrompue.',
-      } : prev)
-      es.close()
-    }
+    const data = await res.json()
 
-    return jobId
+    setJob({
+      url,
+      quality,
+      status:    'done',
+      percent:   100,
+      title:     data.title,
+      thumbnail: data.thumbnail,
+      filename:  data.filename,
+      error:     '',
+    })
+
+    // Trigger browser download — opens directly from CDN URL
+    const a = document.createElement('a')
+    a.href     = data.url
+    a.download = data.filename
+    a.target   = '_blank'
+    a.rel      = 'noopener noreferrer'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+
+    return data
   }, [])
 
-  const cancel = useCallback(async () => {
-    if (!job) return
-    esRef.current?.close()
-    try { await axios.post(`${API}/api/cancel/${job.jobId}`) } catch {}
+  const cancel = useCallback(() => {
     setJob(null)
-  }, [job])
+  }, [])
 
   const reset = useCallback(() => {
-    esRef.current?.close()
     setJob(null)
   }, [])
 
